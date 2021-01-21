@@ -36,6 +36,12 @@ declare -rA FW_FILE_MAP=( \
     [$SPC3_ASIC]="/etc/mlnx/fw-SPC3.mfa" \
 )
 
+declare -rA MST_DEVICE_MAP=( \
+    [$SPC1_ASIC]="/dev/mst/mt52100_pci_cr0" \
+    [$SPC2_ASIC]="/dev/mst/mt53100_pci_cr0" \
+    [$SPC3_ASIC]="/dev/mst/mt53104_pci_cr0" \
+)
+
 IMAGE_UPGRADE="${NO_PARAM}"
 VERBOSE_LEVEL="${VERBOSE_MIN}"
 
@@ -175,6 +181,11 @@ function UpgradeFW() {
         ExitFailure "failed to detect ASIC type"
     fi
 
+    local -r _MST_DEVICE="${MST_DEVICE_MAP[$_ASIC_TYPE]}"
+    if [[ ! -c "${_MST_DEVICE}" ]]; then
+        ExitFailure "no such device: ${_MST_DEVICE}"
+    fi
+
     if [ ! -z "${_FS_MOUNTPOINT}" ]; then
         local -r _FW_FILE="${_FS_MOUNTPOINT}/${FW_FILE_MAP[$_ASIC_TYPE]}"
     else
@@ -207,7 +218,7 @@ function UpgradeFW() {
         ExitSuccess "firmware is up to date"
     else
         LogNotice "firmware upgrade is required. Installing compatible version..."
-        RunCmd "${BURN_CMD} -i ${_FW_FILE}"
+        RunCmd "${BURN_CMD} -d ${_MST_DEVICE} -i ${_FW_FILE}"
     fi
 }
 
