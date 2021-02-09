@@ -1,6 +1,13 @@
 #!/usr/bin/env python
-import os
-import sys
+
+try:
+    import os
+    import sys
+    import ast
+    import json
+    from swsssdk import ConfigDBConnector
+except ImportError as e:
+    raise ImportError("%s - required module not found" % str(e))
 
 
 def get_port_config_file_name(hwsku=None, platform=None, asic=None):
@@ -17,10 +24,24 @@ def get_port_config_file_name(hwsku=None, platform=None, asic=None):
         if os.path.isfile(candidate):
             return candidate
     return None
-    
 
 
-def get_port_config(hwsku=None, platform=None, port_config_file=None, asic=None):
+def get_ports_config_db():
+    config_db = ConfigDBConnector()
+    try:
+        config_db.connect()
+        ports_table = config_db.get_table("PORT")
+        ports = ast.literal_eval(json.dumps(ports_table))
+    except Exception as e:
+        ports = None
+    return ports
+
+
+def get_port_config(hwsku=None, platform=None, port_config_file=None, asic=None, get_ports_from_db=False):
+    if get_ports_from_db:
+        ports = get_ports_config_db()
+        return (ports, {}, {})
+
     if not port_config_file:
         port_config_file = get_port_config_file_name(hwsku, platform, asic)
         if not port_config_file:
