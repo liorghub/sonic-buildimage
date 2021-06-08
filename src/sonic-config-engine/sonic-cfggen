@@ -314,8 +314,11 @@ def main():
         if args.port_config is None:
             args.port_config = device_info.get_path_to_port_config_file(hwsku)
         (ports, _, _) = get_port_config(hwsku, platform, args.port_config, asic_id)
-        if ports:
-            deep_update(data, {'PORT': ports})
+        if not ports:
+            print('Failed to get port config', file=sys.stderr)
+            sys.exit(1)
+        deep_update(data, {'PORT': ports})
+
         brkout_table = get_breakout_mode(hwsku, platform, args.port_config)
         if  brkout_table is not None:
             deep_update(data, {'BREAKOUT_CFG': brkout_table})
